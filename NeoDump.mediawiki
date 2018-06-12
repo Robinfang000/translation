@@ -1,0 +1,125 @@
+<pre>
+  NEP: <to be assigned>
+  Title: NEOVMDump
+  Author: lights<lightsever@hotmail.com>
+  Type: Standard
+  Status: Draft
+  Created: 2018-05-30
+</pre>
+
+==Abstract==
+
+This standard is proposed to standardize the format of NEOVM Dump file.
+
+==Motivation==
+
+Given that NeoContract executes on nodes, the execution process of NEOVM can be dumped and viewed 
+on playback tools so that we can witness how smart contract debugging is implemented. 
+The standard is proposed to unify the format of NEOVM Dump file.
+
+==Implementation==
+
+Modification may be implemented in NEOCLI or NEOGUI. Dump will be performed either through transactions sent by this node or all transactions,
+ which is not within the scope of this standard.
+
+According to the standard, every AppEngine.run in NEOVM will be dumped as a file. Multiple 
+AppEngine.run may take place in a single transaction, including one AppEngine.run per authentication, 
+one AppEngine.run for contract execution implementation and other triggered AppEngine.run. 
+Contract execution implementation normally demands the maximum debugging efforts.
+
+The file dumps the LoadScript process of AppEngine.run, executions of 
+every OpCode in the Steplnfo process and the stack change resulted therefrom.
+
+Playback tools may replay every NeoVM AppEngine.run in details and piece together the 
+detailed information to reproduce the entire contract implementation process for 
+the purpose of contract debugging.
+
+==File format==
+Dump file is a Json file. Considering its large size, it’s recommended to compress the file using 
+llvm algorithm and save the hexstring of the compressed data to allow quicker network transmission.
+
+json file
+{
+ "script":ScriptObject , //ScriptObject is the Json object of DumpLoadScript.
+ "VMState": string,      //If NeoVm powers down, normally the result is “HALT, Break” and occasionally “Fault” and “Gas overspend”, etc.
+
+ScriptObject
+{
+    "hash":string,    //scripthash
+    "ops":OpObject[]   //Opcode object array refers to detailed information of every instruction.
+}
+
+OpObject
+{
+    "addr": int,   //opcode address
+    "op": string,   //opcode name
+    "stack": string[],  //record how stack is affected
+     [Optional]"result":{[id:string]:any},  //If new data is inserted to stack, the result will show the new data.
+     [Optional]"subscript":ScriptObject    //Subscript refers to newly nested contracts when appcall is performed. 
+}
+
+stack
+
+When op is dup, stack operation takes two steps: a peek and a push.
+							"addr": 19,
+							"op": "DUP",
+							"stack": [
+								"Peek",
+								"Push"
+							],
+The entire operation will be dumped. Since the last step is “Push”, the result shows value.
+
+result
+
+Result only contains one item. The key is a string, indicating that the type of inserted data is 
+a string. For example, Integer String ByteArray value is uncertain. If it’s a single value, 
+it should be a string; if it’s an array, it should be a nested structure.
+
+Example 1
+
+							"result": {
+								"Integer": "2"
+							}
+
+Example 2
+
+"result": {
+								"Array": [{
+										"ByteArray": "6665653233313839613637343439393438366233303339656332663939316532"
+									},
+									{
+										"ByteArray": "7b2276706e4e616d65223a22736f756c76696c6c65222c226164647265737346726f6d223a2241617453686d6e5946485473676e7659486d33563267577a463650374e436838514b222c2266726f6d5032704964223a2238453635303143384338313944453135434531363534323438324138454443424645323943324136443430334538353143394241443531454532313834333743313346364644413333464238222c2261646472657373546f223a22414a5a6743706e654d3453756879486769734b734d7257614e57686f775841435333222c22746f5032704964223a2244343839464543363431423138343544464330304630364531364434353032353534364142373935313543303135343332413239323235333642313441433131423133374537463744464646222c22716c63223a2231222c227472616e73537461747573223a747275652c2274797065223a2233227d"
+									}
+								]
+
+==Sample file==
+[
+    {
+	"name": "Main",
+	"addr": "0000",
+	"map": ["0003-24", "0004-27", "0049-30", "0099-32", "00AB-16707566", "00B3-33", "00B4-34", "00F6-35", "0101-37", "0102-37", "010D-68"]
+    },
+    {
+	"name": "GetTrueByte",
+	"addr": "0116",
+	"map": ["0120-71", "012A-74", "0152-75", "0161-76"]
+    },
+    {
+	"name": "NnsRegistry",
+	"addr": "016A",
+	"map": []
+    },
+    {
+	"name": "testRegistry",
+	"addr": "016A",
+	"map": ["0182-81", "01E3-84", "01F2-85"]
+    },
+    ......
+]
+
+==Sample file==
+https://www.cnblogs.com/crazylights/p/8962202.html  //user guide
+https://github.com/NewEconoLab/neondebug    //playback tools
+https://github.com/NewEconoLab/neo-gui-nel    //dump tools
+
+
