@@ -1,0 +1,72 @@
+<pre>
+  NEP: <to be assigned>
+  Title: AVMMap
+  Author: lights<lightsever@hotmail.com>
+  Type: Standard
+  Status: Draft
+  Created: 2018-05-30
+</pre>
+
+==Abstract==
+
+This standard specifies a uniform mapping rule between an AVM file and its source map file.
+
+==Motivation==
+
+A few debugging plans have been proposed for NeoContract, yet haven’t been widely adopted. 
+A MAP file standard is thus proposed to allow parallel adoption of different proposals.
+
+
+==Implementation==
+
+According to the standard, NEO compiler will generate a .map.json 
+file in addition to .avm file and .abi.json file that are normally generated.
+
+The file maps an avm address to the source code line. The source code of all kinds of debugging tools 
+are only viewable with a known .avm address.Therefore the MAP file standard serves as a 
+fundamental standard for all the debugging tools.
+
+
+==Sample format==
+The json file is an array formed by FunctionObject.
+[
+   FunctionObject,
+   FunctionObject,
+   FunctionObject,
+   ...
+]
+FunctionObject contains three fields.
+{
+    "name": string,
+    "addr": string,
+    "map": string[]
+}
+name represents the name of a corresponding interface function, e.g. “Main” and “transfer”.
+addr refers to the hexstring of the avm address of the function, .e.g “0116”.
+map is a string array. Each of its item demonstrates a mapping relation between an avm address and its source code line, e.g. “0120-71” ( “0120” represents the hexstring of the avm address while “71” the source code line in decimal format.)
+
+==Sample format==
+[
+    {
+	"name": "Main",
+	"addr": "0000",
+	"map": ["0003-24", "0004-27", "0049-30", "0099-32", "00AB-16707566", "00B3-33", "00B4-34", "00F6-35", "0101-37", "0102-37", "010D-68"]
+    },
+    {
+	"name": "GetTrueByte",
+	"addr": "0116",
+	"map": ["0120-71", "012A-74", "0152-75", "0161-76"]
+    },
+    {
+	"name": "NnsRegistry",
+	"addr": "016A",
+	"map": []
+    },
+    {
+	"name": "testRegistry",
+	"addr": "016A",
+	"map": ["0182-81", "01E3-84", "01F2-85"]
+    },
+    ......
+]
+
